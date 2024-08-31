@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "my_krml_24701184"
-version = "0.1.0"
+version = "2024.0.1.1"
 description = "Package for everything ML"
 authors = ["Farhan"]
 license = "MIT"
