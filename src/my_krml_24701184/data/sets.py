@@ -69,7 +69,7 @@ def save_sets(X_train=None, y_train=None, X_val=None, y_val=None, X_test=None, y
 
 
 def load_sets(path='../data/processed/'):
-    """Load the different locally save sets
+    """Load the different locally saved sets
 
     Parameters
     ----------
@@ -78,18 +78,13 @@ def load_sets(path='../data/processed/'):
 
     Returns
     -------
-    Numpy Array
+    Tuple of Numpy Arrays
         Features for the training set
-    Numpy Array
         Target for the training set
-    Numpy Array
         Features for the validation set
-    Numpy Array
         Target for the validation set
-    Numpy Array
-        Features for the testing set
-    Numpy Array
-        Target for the testing set
+        Features for the testing set (or None if not available)
+        Target for the testing set (or None if not available)
     """
     import numpy as np
     import os.path
@@ -102,6 +97,7 @@ def load_sets(path='../data/processed/'):
     y_test  = np.load(f'{path}y_test.npy' , allow_pickle=True) if os.path.isfile(f'{path}y_test.npy')  else None
 
     return X_train, y_train, X_val, y_val, X_test, y_test
+
 
 
 def subset_x_y(target, features, start_index:int, end_index:int):
@@ -167,8 +163,3 @@ def split_sets_by_time(df, target_col, test_ratio=0.2):
     X_test, y_test   = subset_x_y(target=target, features=df_copy, start_index=-cutoff, end_index=len(df_copy))
 
     return X_train, y_train, X_val, y_val, X_test, y_test
-
-
-
-
-
