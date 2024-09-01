@@ -46,63 +46,103 @@ def test_pop_target_df_none(features_fixture, target_fixture):
         features, target = pop_target(df=None, target_col="salary")
 
 
+#--------------------------------------------------------------------------------------------------------------------------------
 
-import pytest
-import numpy as np
 import os
+import pytest
+import pandas as pd
 from my_krml_24701184.data.sets import save_sets, load_sets
 
 @pytest.fixture
-def temp_data():
-    """Fixture for creating temporary data and directory."""
-    temp_path = './temp_data/'
-    os.makedirs(temp_path, exist_ok=True)
+def mock_data():
+    return {
+        'X_train': pd.DataFrame({'a': [1, 2], 'b': [3, 4]}),
+        'y_train': pd.DataFrame([1, 0]),
+        'X_val': pd.DataFrame({'a': [5, 6], 'b': [7, 8]}),
+        'y_val': pd.DataFrame([0, 1]),
+        'X_test': pd.DataFrame({'a': [9, 10], 'b': [11, 12]}),
+        'y_test': pd.DataFrame([1, 1])
+    }
 
-    # Sample data
-    X_train = np.array([[1, 2], [3, 4]])
-    y_train = np.array([0, 1])
-    X_val = np.array([[5, 6]])
-    y_val = np.array([1])
-    X_test = np.array([[7, 8]])
-    y_test = np.array([0])
+@pytest.fixture
+def temp_directory(tmp_path):
+    return tmp_path
 
-    # Save the sample data
-    save_sets(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, X_test=X_test, y_test=y_test, path=temp_path)
+def test_save_sets(mock_data, temp_directory):
+    save_sets(
+        X_train=mock_data['X_train'],
+        y_train=mock_data['y_train'],
+        X_val=mock_data['X_val'],
+        y_val=mock_data['y_val'],
+        X_test=mock_data['X_test'],
+        y_test=mock_data['y_test'],
+        path=temp_directory
+    )
 
-    yield temp_path
+    # Verify directory exists
+    assert os.path.isdir(temp_directory)
+    print(f"Temp directory: {temp_directory}")
 
-    # Cleanup after tests
-    for file in os.listdir(temp_path):
-        os.remove(os.path.join(temp_path, file))
-    os.rmdir(temp_path)
+    # Verify that files are created
+    for filename in ['X_train.csv', 'y_train.csv', 'X_val.csv', 'y_val.csv', 'X_test.csv', 'y_test.csv']:
+        file_path = temp_directory / filename
+        assert os.path.isfile(file_path), f"File not found: {file_path}"
+        print(f"File exists: {file_path}")
 
-def test_save_sets(temp_data):
-    """Test the save_sets function."""
-    path = temp_data
+    # Verify the content of the files
+    assert pd.read_csv(temp_directory / 'X_train.csv').equals(mock_data['X_train'])
+    assert pd.read_csv(temp_directory / 'y_train.csv', header=None).equals(mock_data['y_train'])
+    assert pd.read_csv(temp_directory / 'X_val.csv').equals(mock_data['X_val'])
+    assert pd.read_csv(temp_directory / 'y_val.csv', header=None).equals(mock_data['y_val'])
+    assert pd.read_csv(temp_directory / 'X_test.csv').equals(mock_data['X_test'])
+    assert pd.read_csv(temp_directory / 'y_test.csv', header=None).equals(mock_data['y_test'])
 
-    assert os.path.isfile(f'{path}X_train.npy')
-    assert os.path.isfile(f'{path}y_train.npy')
-    assert os.path.isfile(f'{path}X_val.npy')
-    assert os.path.isfile(f'{path}y_val.npy')
-    assert os.path.isfile(f'{path}X_test.npy')
-    assert os.path.isfile(f'{path}y_test.npy')
+def test_load_sets(mock_data, temp_directory):
+    # Save mock data to temp_directory
+    save_sets(
+        X_train=mock_data['X_train'],
+        y_train=mock_data['y_train'],
+        X_val=mock_data['X_val'],
+        y_val=mock_data['y_val'],
+        X_test=mock_data['X_test'],
+        y_test=mock_data['y_test'],
+        path=temp_directory
+    )
 
-def test_load_sets(temp_data):
-    """Test the load_sets function."""
-    path = temp_data
+    loaded_data = load_sets(path=temp_directory)
 
-    X_train, y_train, X_val, y_val, X_test, y_test = load_sets(path=path)
+    # Verify the loaded data
+    assert 'X_train' in loaded_data
+    assert 'y_train' in loaded_data
+    assert 'X_val' in loaded_data
+    assert 'y_val' in loaded_data
+    assert 'X_test' in loaded_data
+    assert 'y_test' in loaded_data
 
-    expected_X_train = np.array([[1, 2], [3, 4]])
-    expected_y_train = np.array([0, 1])
-    expected_X_val = np.array([[5, 6]])
-    expected_y_val = np.array([1])
-    expected_X_test = np.array([[7, 8]])
-    expected_y_test = np.array([0])
+    assert loaded_data['X_train'].equals(mock_data['X_train'])
+    assert loaded_data['y_train'].equals(mock_data['y_train'])
+    assert loaded_data['X_val'].equals(mock_data['X_val'])
+    assert loaded_data['y_val'].equals(mock_data['y_val'])
+    assert loaded_data['X_test'].equals(mock_data['X_test'])
+    assert loaded_data['y_test'].equals(mock_data['y_test'])
 
-    np.testing.assert_array_equal(X_train, expected_X_train)
-    np.testing.assert_array_equal(y_train, expected_y_train)
-    np.testing.assert_array_equal(X_val, expected_X_val)
-    np.testing.assert_array_equal(y_val, expected_y_val)
-    np.testing.assert_array_equal(X_test, expected_X_test)
-    np.testing.assert_array_equal(y_test, expected_y_test)
+def test_load_sets_missing_files(mock_data, temp_directory):
+    # Save only some mock data to temp_directory
+    save_sets(
+        X_train=mock_data['X_train'],
+        y_train=mock_data['y_train'],
+        path=temp_directory
+    )
+
+    loaded_data = load_sets(path=temp_directory)
+
+    # Verify that only existing files are loaded
+    assert 'X_train' in loaded_data
+    assert 'y_train' in loaded_data
+    assert 'X_val' not in loaded_data
+    assert 'y_val' not in loaded_data
+    assert 'X_test' not in loaded_data
+    assert 'y_test' not in loaded_data
+
+
+

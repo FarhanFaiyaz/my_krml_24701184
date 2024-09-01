@@ -24,80 +24,67 @@ def pop_target(df, target_col):
     return df_copy, target
 
 
+#--------------------------------------------------------------------------------------------------------------------------------
 
+import pandas as pd
+import os
 
 def save_sets(X_train=None, y_train=None, X_val=None, y_val=None, X_test=None, y_test=None, path='../data/processed/'):
-    """Save the different sets locally
+    """Save the different sets locally as CSV files."""
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print(f"Directory created: {path}")
 
-    Parameters
-    ----------
-    X_train: Numpy Array
-        Features for the training set
-    y_train: Numpy Array
-        Target for the training set
-    X_val: Numpy Array
-        Features for the validation set
-    y_val: Numpy Array
-        Target for the validation set
-    X_test: Numpy Array
-        Features for the testing set
-    y_test: Numpy Array
-        Target for the testing set
-    path : str
-        Path to the folder where the sets will be saved (default: '../data/processed/')
-
-    Returns
-    -------
-    """
-    import numpy as np
-
+    files_written = []
+    
     if X_train is not None:
-      np.save(f'{path}X_train', X_train)
+        X_train.to_csv(os.path.join(path, 'X_train.csv'), index=False)
+        files_written.append('X_train.csv')
     if X_val is not None:
-      np.save(f'{path}X_val',   X_val)
+        X_val.to_csv(os.path.join(path, 'X_val.csv'), index=False)
+        files_written.append('X_val.csv')
     if X_test is not None:
-      np.save(f'{path}X_test',  X_test)
+        X_test.to_csv(os.path.join(path, 'X_test.csv'), index=False)
+        files_written.append('X_test.csv')
     if y_train is not None:
-      np.save(f'{path}y_train', y_train)
+        y_train.to_csv(os.path.join(path, 'y_train.csv'), index=False, header=False)
+        files_written.append('y_train.csv')
     if y_val is not None:
-      np.save(f'{path}y_val',   y_val)
+        y_val.to_csv(os.path.join(path, 'y_val.csv'), index=False, header=False)
+        files_written.append('y_val.csv')
     if y_test is not None:
-      np.save(f'{path}y_test',  y_test)
+        y_test.to_csv(os.path.join(path, 'y_test.csv'), index=False, header=False)
+        files_written.append('y_test.csv')
+
+    print(f"Files written: {files_written}")
 
 
 
 
+
+
+
+#--------------------------------------------------------------------------------------------------------------------------------
+
+
+import pandas as pd
+import os
 
 def load_sets(path='../data/processed/'):
-    """Load the different locally saved sets
+    """Load the datasets from CSV files."""
+    data = {}
+    for filename in ['X_train.csv', 'y_train.csv', 'X_val.csv', 'y_val.csv', 'X_test.csv', 'y_test.csv']:
+        file_path = os.path.join(path, filename)
+        if os.path.isfile(file_path):
+            if 'y_' in filename:
+                data[filename.replace('.csv', '')] = pd.read_csv(file_path, header=None)
+            else:
+                data[filename.replace('.csv', '')] = pd.read_csv(file_path)
+    return data
 
-    Parameters
-    ----------
-    path : str
-        Path to the folder where the sets are saved (default: '../data/processed/')
 
-    Returns
-    -------
-    Tuple of Numpy Arrays
-        Features for the training set
-        Target for the training set
-        Features for the validation set
-        Target for the validation set
-        Features for the testing set (or None if not available)
-        Target for the testing set (or None if not available)
-    """
-    import numpy as np
-    import os.path
 
-    X_train = np.load(f'{path}X_train.npy', allow_pickle=True) if os.path.isfile(f'{path}X_train.npy') else None
-    X_val   = np.load(f'{path}X_val.npy'  , allow_pickle=True) if os.path.isfile(f'{path}X_val.npy')   else None
-    X_test  = np.load(f'{path}X_test.npy' , allow_pickle=True) if os.path.isfile(f'{path}X_test.npy')  else None
-    y_train = np.load(f'{path}y_train.npy', allow_pickle=True) if os.path.isfile(f'{path}y_train.npy') else None
-    y_val   = np.load(f'{path}y_val.npy'  , allow_pickle=True) if os.path.isfile(f'{path}y_val.npy')   else None
-    y_test  = np.load(f'{path}y_test.npy' , allow_pickle=True) if os.path.isfile(f'{path}y_test.npy')  else None
-
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
+#--------------------------------------------------------------------------------------------------------------------------------
 
 
 def subset_x_y(target, features, start_index:int, end_index:int):
@@ -124,7 +111,7 @@ def subset_x_y(target, features, start_index:int, end_index:int):
 
     return features[start_index:end_index], target[start_index:end_index]
 
-
+#--------------------------------------------------------------------------------------------------------------------------------
 
 def split_sets_by_time(df, target_col, test_ratio=0.2):
     """Split sets by indexes for an ordered dataframe
