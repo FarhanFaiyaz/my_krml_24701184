@@ -26,40 +26,44 @@ def pop_target(df, target_col):
 
 #--------------------------------------------------------------------------------------------------------------------------------
 
-import pandas as pd
 import os
+import pandas as pd
 
-def save_sets(X_train=None, y_train=None, X_val=None, y_val=None, X_test=None, y_test=None, path='../data/processed/'):
-    """Save the different sets locally as CSV files."""
-    if not os.path.exists(path):
-        os.makedirs(path)
-        print(f"Directory created: {path}")
+def save_sets(base_path, X_train=None, y_train=None, X_val=None, y_val=None, X_test=None, y_test=None):
+    """
+    Saves multiple dataframes to CSV files in the specified directory.
 
-    files_written = []
-    
-    if X_train is not None:
-        X_train.to_csv(os.path.join(path, 'X_train.csv'), index=False)
-        files_written.append('X_train.csv')
-    if X_val is not None:
-        X_val.to_csv(os.path.join(path, 'X_val.csv'), index=False)
-        files_written.append('X_val.csv')
-    if X_test is not None:
-        X_test.to_csv(os.path.join(path, 'X_test.csv'), index=False)
-        files_written.append('X_test.csv')
-    if y_train is not None:
-        y_train.to_csv(os.path.join(path, 'y_train.csv'), index=False, header=False)
-        files_written.append('y_train.csv')
-    if y_val is not None:
-        y_val.to_csv(os.path.join(path, 'y_val.csv'), index=False, header=False)
-        files_written.append('y_val.csv')
-    if y_test is not None:
-        y_test.to_csv(os.path.join(path, 'y_test.csv'), index=False, header=False)
-        files_written.append('y_test.csv')
+    Parameters
+    ----------
+    base_path : str
+        The directory path where all CSV files will be saved.
+    X_train : pd.DataFrame, optional
+        Training feature set, by default None.
+    y_train : pd.Series, optional
+        Training target set, by default None.
+    X_val : pd.DataFrame, optional
+        Validation feature set, by default None.
+    y_val : pd.Series, optional
+        Validation target set, by default None.
+    X_test : pd.DataFrame, optional
+        Test feature set, by default None.
+    y_test : pd.Series, optional
+        Test target set, by default None.
+    """
 
-    print(f"Files written: {files_written}")
+    datasets = {
+        "X_train": X_train,
+        "y_train": y_train,
+        "X_val": X_val,
+        "y_val": y_val,
+        "X_test": X_test,
+        "y_test": y_test
+    }
 
-
-
+    for name, data in datasets.items():
+        if data is not None:
+            save_path = os.path.join(base_path, f"{name}.csv")
+            data.to_csv(save_path, index=False)
 
 
 
@@ -67,20 +71,42 @@ def save_sets(X_train=None, y_train=None, X_val=None, y_val=None, X_test=None, y
 #--------------------------------------------------------------------------------------------------------------------------------
 
 
-import pandas as pd
 import os
+import pandas as pd
 
-def load_sets(path='../data/processed/'):
-    """Load the datasets from CSV files."""
-    data = {}
-    for filename in ['X_train.csv', 'y_train.csv', 'X_val.csv', 'y_val.csv', 'X_test.csv', 'y_test.csv']:
-        file_path = os.path.join(path, filename)
-        if os.path.isfile(file_path):
-            if 'y_' in filename:
-                data[filename.replace('.csv', '')] = pd.read_csv(file_path, header=None)
+def load_sets(base_path):
+    """
+    Loads multiple dataframes from CSV files in the specified directory.
+
+    Parameters
+    ----------
+    base_path : str
+        The directory path from where all CSV files will be loaded.
+
+    Returns
+    -------
+    dict
+        A dictionary with dataframe names as keys and dataframes as values.
+    """
+    datasets = ["X_train", "y_train", "X_val", "y_val", "X_test", "y_test"]
+    loaded_datasets = {}
+
+    for name in datasets:
+        file_path = os.path.join(base_path, f"{name}.csv")
+        if os.path.exists(file_path):
+            if "y_" in name:
+                # Load as DataFrame and then convert to Series
+                df = pd.read_csv(file_path)
+                loaded_datasets[name] = pd.Series(df.iloc[:, 0], name=df.columns[0])
             else:
-                data[filename.replace('.csv', '')] = pd.read_csv(file_path)
-    return data
+                # Load as DataFrame
+                loaded_datasets[name] = pd.read_csv(file_path)
+
+    return loaded_datasets
+
+
+
+
 
 
 
